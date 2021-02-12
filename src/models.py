@@ -5,37 +5,55 @@ from sqlalchemy.orm import relationship, backref
 db = SQLAlchemy()
 
 class User(db.Model):
+    __tablename__="user"
+
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), unique=True, nullable=False)
+    name = db.Column(db.String(250), unique=True, nullable=False)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False)
-    children = db.relationship('Tasks', lazy=True)
+    task = db.relationship('Task', lazy=True)
 
     def __repr__(self):
-        return f'User {self.username}'
+        return f'User {self.name}'
 
     def serialize(self):
         return {
             "id": self.id,
-            "email": self.email,
-            # do not serialize the password, its a security breach
+            "name": self.name,
         }
     
-    def new_User():
-        new_user = User(username="rafaela", is_active=True)
-        db.session.add(new_user)
+    @classmethod
+    def get_by_name(cls, name):
+        user= cls.query.filter_by(name= name).first()
+        return user
+
+    def add(self):
+        db.session.add(self)
         db.session.commit()
 
-class Tasks(db.Model):
+
+class Task(db.Model):
+    __tablename__="tasks"
+
     id = db.Column(db.Integer, primary_key=True)
-    text_task = db.Column(db.String(250), nullable=False)
+    label = db.Column(db.String(250), nullable=False)
     is_done = db.Column(db.Boolean(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
     def __repr__(self):
-        return f'Tasks {self.text_task}'
+        return f'The task {self.label} has the status {self.is_done}'
         
     def serialize(self):
         return {
-            "id": self.id,
-            "text_task": self.text_task
+            "id": self.user_id,
+            "label": self.label,
+            "is_done": self.is_done,
         }
+
+    @classmethod
+    def get_by_user(cls, user):
+        tasks= cls.query.filter_by(user_id=user)
+        return tasks
+
+    def add(self, user):
+        db.session.add(self)
+        db.session.commit()

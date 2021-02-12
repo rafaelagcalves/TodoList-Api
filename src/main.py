@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Task
 #from models import Person
 
 app = Flask(__name__)
@@ -30,15 +30,45 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+@app.route('/user/<name>', methods=['GET'])
+def get_user_information(name):
+    user = User.get_by_name(name)
+    if user:
+        return jsonify(user.serialize()), 200
+    else: "User nor found", 404
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+@app.route('/user', methods=['POST'])
+def create_user():
+    name = request.get_json().get("name", None)
+    if name:
+        user = User(name=name, is_active=True)
+        user.add()
+        return "Created user", 201
+    return "Missing new user name", 400
 
-    return jsonify(response_body), 200
+@app.route('/user/<name>/tasks', methods=['GET'])
+def get_user_tasks(name):
+    user = User.get_by_name(name)
+    tasks = Task.get_by_user(user.id)
+    tasks = [task.serialize() for task in tasks if task is not None]
+    return jsonify(tasks), 200
 
+@app.route('/user/<name>/tasks', methods=['POST'])
+def add_user_new_task(name):
+    user = User.get_by_name(name).serialize()
+    new_tasks = request.get_json()
+
+    for new_task in new_tasks:
+        task = Task(
+            label= new_task.get('label'),
+            is_done= new_task.get('is_done'),
+            user_id=user.get('id')
+           # print(user_id)
+        )
+        task.add(name)
+
+    return "Added tasks",200
+    
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
