@@ -46,6 +46,26 @@ def create_user():
         return "Created user", 201
     return "Missing new user name", 400
 
+@app.route('/user/<name>', methods=['PUT'])
+def update_user(name):
+    user = User.get_by_name(name)
+    new_name = request.get_json().get("name", None)
+    
+    if new_name and User.get_by_name(new_name) is None:
+        updated_user = user.update_name(new_name)
+        return updated_user.serialize(), 200
+    
+    return "Another user with this username already exists. Maybe it's your evil twin. Spooky!", 400
+
+@app.route('/user/<name>', methods=['DELETE'])
+def delete_user(name):
+    user = User.get_by_name(name)
+    if user:
+        delete_user = User.delete_user(user)
+        return f'Your account has been deleted: {user}', 200
+    else:
+        return 'That username does not exists', 404
+    
 @app.route('/user/<name>/tasks', methods=['GET'])
 def get_user_tasks(name):
     user = User.get_by_name(name)
@@ -55,20 +75,34 @@ def get_user_tasks(name):
 
 @app.route('/user/<name>/tasks', methods=['POST'])
 def add_user_new_task(name):
-    user = User.get_by_name(name).serialize()
+    user = User.get_by_name(name)
     new_tasks = request.get_json()
 
     for new_task in new_tasks:
         task = Task(
             label= new_task.get('label'),
             is_done= new_task.get('is_done'),
-            user_id=user.get('id')
-           # print(user_id)
+            user_id=user.id
         )
         task.add(name)
 
     return "Added tasks",200
-    
+
+@app.route('/user/<name>/tasks/<id>', methods=['PUT'])
+def update_task(name, id):
+    body = request.get_json()
+    id = int(id)
+    task = Task.get_by_id(id)
+    task.update_task(body['label'], body['is_done'], )
+
+    return "Task Updated Successfully", 200
+
+@app.route('/user/<name>/tasks/<id_tasks>', methods=['DELETE'])
+def delete_tasks(name, id_tasks):
+    task = Task.get_task(id_tasks)
+    task.delete()
+    return f'Your task has been deleted', 200
+
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))

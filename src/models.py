@@ -17,19 +17,26 @@ class User(db.Model):
 
     def serialize(self):
         return {
-            "id": self.id,
             "name": self.name,
         }
     
     @classmethod
     def get_by_name(cls, name):
-        user= cls.query.filter_by(name= name).first()
+        user= cls.query.filter_by(name = name).first()
         return user
 
     def add(self):
         db.session.add(self)
         db.session.commit()
 
+    def update_name(self, name):
+        self.name = name
+        db.session.commit()
+        return self
+
+    def delete_user(self):
+        db.session.delete(self)
+        db.session.commit()
 
 class Task(db.Model):
     __tablename__="tasks"
@@ -54,6 +61,26 @@ class Task(db.Model):
         tasks= cls.query.filter_by(user_id=user)
         return tasks
 
+    @classmethod
+    def get_by_id(cls, task_id):
+        task = cls.query.filter_by(id = task_id).first()
+        return task
+
+    @classmethod
+    def get_task(cls, id_tasks):
+        tasks= cls.query.get(id_tasks)
+        return tasks
+
     def add(self, user):
         db.session.add(self)
+        db.session.commit()
+
+    def update_task(self, new_label, new_done):
+        self.label = new_label
+        self.is_done = new_done
+        db.session.commit()
+        return self
+
+    def delete(self):
+        db.session.delete(self)
         db.session.commit()
