@@ -1,4 +1,4 @@
-# Flask Boilerplate for Profesional Development
+# TodoList-Api 🐍
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/from-referrer/)
 <p align="center">
